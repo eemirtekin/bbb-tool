@@ -36,7 +36,8 @@
                 state: '${state}',
                 timezoneoffset: '${timezoneOffset}',
                 sakaiVersion: '${sakaiVersion}',
-                maxFileSizeInBytes: '${maxFileSizeInBytes}'
+                maxFileSizeInBytes: '${maxFileSizeInBytes}',
+                checkICalOption: ${checkICalOption},
              }
         };
     </script>
@@ -132,7 +133,7 @@
         {var statusClass = m.joinable ? 'status_joinable_' + m.joinableMode: (m.notStarted ? 'bbb_status_notstarted' : 'bbb_status_finished')}
         {var statusText = m.joinable ? (m.joinableMode == 'available'? bbb_status_joinable_available: m.joinableMode == 'inprogress'? bbb_status_joinable_inprogress: m.joinableMode == 'unavailable'? bbb_status_joinable_unavailable: m.joinableMode == 'unreachable'? bbb_status_joinable_unreachable: '' ) : (m.notStarted ? bbb_status_notstarted : bbb_status_finished)}
         <td id="meeting_status_${D}{m.id}" class="${D}{statusClass}">${D}{statusText}</td>
-        <td>${D}{m.startDate ? new Date( parseInt(m.startDate) - parseInt(browserTimezoneOffset) + parseInt(timezoneoffset) + ( (new Date()).dst() && !(new Date( parseInt(m.startDate) - parseInt(browserTimezoneOffset) + parseInt(timezoneoffset))).dst()? 3600000: !(new Date()).dst() && (new Date( parseInt(m.startDate) - parseInt(browserTimezoneOffset) + parseInt(timezoneoffset))).dst()? (3600000 * -1): 0 ) ).toISO8601String() : ''}</td>
+        <td>${D}{m.formattedStartDate}</td>
         <td>${D}{m.endDate ? new Date( parseInt(m.endDate) - parseInt(browserTimezoneOffset) + parseInt(timezoneoffset) + ( (new Date()).dst() && !(new Date( parseInt(m.endDate) - parseInt(browserTimezoneOffset) + parseInt(timezoneoffset))).dst()? 3600000: !(new Date()).dst() && (new Date( parseInt(m.endDate) - parseInt(browserTimezoneOffset) + parseInt(timezoneoffset))).dst()? (3600000 * -1): 0 ) ).toISO8601String() : ''}</td>
         <td>${D}{m.ownerDisplayName}</td>
       </tr>
@@ -159,103 +160,103 @@
     <button onclick="meetings.switchState('recordings')" title="${D}{bbb_refresh}"><i class="fa fa-refresh"></i>&nbsp;${D}{bbb_refresh}</button>
 {/if}
     <input type="text" class="search" id="recSearch" placeholder=${bbb_search}>
-<table id="bbb_recording_table" class="listHier">
-    <thead>
-        <tr>
-            <th class="bbb_recName">${D}{bbb_th_recordingname}</th>
-            <th class="bbb_recPreview">${D}{bbb_th_recordingpreview}</th>
-            <th class="bbb_recStatus">${D}{bbb_th_status}</th>
-            <th class="bbb_recStartDate">${D}{bbb_th_recordingdate}</th>
-            <th class="bbb_recLinks">${D}{bbb_th_recordings}</th>
-            <th class="bbb_recLength">${D}{bbb_th_recordinglength}</th>
-        </tr>
-    </thead>
-    <tbody>
-    {for r in recordings}
-   	  {if r.canEdit || r.published == 'true'}
-        <tr class="recordingRow">
-            <td>
-                <span>${D}{r.name}</span>
-                <div class="itemAction" style="margin:0; padding:0;">
-                    <small>
-                    {if r.canEdit}
-                	  {if r.published == 'true'}
-                    	<a href="javascript:;" onclick="return meetings.utils.unpublishRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}');" title="${D}{bbb_action_hide_tooltip}">${D}{bbb_action_hide}</a>
-                      {else}
-                    	<a href="javascript:;" onclick="return meetings.utils.publishRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}');" title="${D}{bbb_action_show_tooltip}">${D}{bbb_action_show}</a>
-                	  {/if}
-                    {/if}
-                    {if r.canDelete}
-                        &nbsp;|&nbsp;
-                        <a href="javascript:;" onclick="return meetings.utils.deleteRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}','${D}{escape(r.name)} [${D}{new Date(parseInt(r.startTime)).toISO8601String()}]');" title="${D}{bbb_action_delete_recording_tooltip}">${D}{bbb_action_delete_recording}</a>
-                    {/if}
-                    {if r.canDelete}
-                      {if r.protected}
-                        &nbsp;|&nbsp;
-                        {if r.protected == 'true'}
-                          <a href="javascript:;" onclick="return meetings.utils.unprotectRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}');" title="${D}{bbb_action_unprotect_tooltip}">${D}{bbb_action_unprotect}</a>
-                        {else}
-                          <a href="javascript:;" onclick="return meetings.utils.protectRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}');" title="${D}{bbb_action_protect_tooltip}">${D}{bbb_action_protect}</a>
+    <table id="bbb_recording_table" class="listHier">
+        <thead>
+            <tr>
+                <th class="bbb_recName">${D}{bbb_th_recordingname}</th>
+                <th class="bbb_recPreview">${D}{bbb_th_recordingpreview}</th>
+                <th class="bbb_recStatus">${D}{bbb_th_status}</th>
+                <th class="bbb_recStartDate">${D}{bbb_th_recordingdate}</th>
+                <th class="bbb_recLinks">${D}{bbb_th_recordings}</th>
+                <th class="bbb_recLength">${D}{bbb_th_recordinglength}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {for r in recordings}
+          {if r.canEdit || r.published == 'true'}
+            <tr class="recordingRow">
+                <td>
+                    <span>${D}{r.name}</span>
+                    <div class="itemAction" style="margin:0; padding:0;">
+                        <small>
+                        {if r.canEdit}
+                          {if r.published == 'true'}
+                            <a href="javascript:;" onclick="return meetings.utils.unpublishRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}');" title="${D}{bbb_action_hide_tooltip}">${D}{bbb_action_hide}</a>
+                          {else}
+                            <a href="javascript:;" onclick="return meetings.utils.publishRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}');" title="${D}{bbb_action_show_tooltip}">${D}{bbb_action_show}</a>
+                          {/if}
                         {/if}
-                      {/if}
+                        {if r.canDelete}
+                            &nbsp;|&nbsp;
+                            <a href="javascript:;" onclick="return meetings.utils.deleteRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}','${D}{escape(r.name)} [${D}{new Date(parseInt(r.startTime)).toISO8601String()}]');" title="${D}{bbb_action_delete_recording_tooltip}">${D}{bbb_action_delete_recording}</a>
+                        {/if}
+                        {if r.canDelete}
+                          {if r.protected}
+                            &nbsp;|&nbsp;
+                            {if r.protected == 'true'}
+                              <a href="javascript:;" onclick="return meetings.utils.unprotectRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}');" title="${D}{bbb_action_unprotect_tooltip}">${D}{bbb_action_unprotect}</a>
+                            {else}
+                              <a href="javascript:;" onclick="return meetings.utils.protectRecordings('${D}{r.meetingID}','${D}{r.recordID}','${D}{stateFunction}');" title="${D}{bbb_action_protect_tooltip}">${D}{bbb_action_protect}</a>
+                            {/if}
+                          {/if}
+                        {/if}
+                        </small>
+                    </div>
+                </td>
+                <td class="bbb_thumbnails">
+                    <div class="bbb_preview_images">
+                        {if r.images && r.published == 'true'}
+                            {for image in r.images}
+                            <a href="${D}{image.url}" class="preview" target="_blank">
+                                <img src="${D}{image.url}" class="thumbnails" width="44px" height="34px" alt="${D}{image.title}">
+                            </a>
+                            {/for}
+                        {elseif r.images}
+                            ${D}{bbb_recording_thumbnails_hidden}
+                        {/if}
+                    </div>
+                </td>
+                <td>
+                  {if r.published == 'true'}
+                    ${D}{bbb_recording_status_shown}
+                  {else}
+                    ${D}{bbb_recording_status_hidden}
+                  {/if}
+                </td>
+                <td class="bbb_startDate">${D}{r.startTime ? (new Date(parseInt(r.startTime)).toISO8601String()) + ' ' + r.timezoneOffset: ''}</td>
+                <td>
+                  {for p in r.playback}
+                    {var recType = bbb_recording_type[p.type] === undefined ? p.type : bbb_recording_type[p.type]}
+                    {var viewRecType = bbb_recording_view_tooltip[p.type] === undefined ? p.type : bbb_recording_view_tooltip[p.type]}
+                    {if r.published == 'true'}
+                        <a href="${D}{p.url}" title="${D}{viewRecType}" target="_blank">${D}{recType}</a>&nbsp;
+                    {else}
+                        ${D}{recType}&nbsp;
                     {/if}
-                    </small>
-                </div>
-            </td>
-            <td class="bbb_thumbnails">
-                <div class="bbb_preview_images">
-                    {if r.images && r.published == 'true'}
-                        {for image in r.images}
-                        <a href="${D}{image.url}" class="preview" target="_blank">
-                            <img src="${D}{image.url}" class="thumbnails" width="44px" height="34px" alt="${D}{image.title}">
-                        </a>
-                        {/for}
-                    {elseif r.images}
-                        ${D}{bbb_recording_thumbnails_hidden}
+                  {/for}
+                </td>
+                <td>
+                  {var fLength=false}
+                  {for p in r.playback}
+                    {if !fLength && p.length }
+                      ${D}{p.length}
+                      {var fLength=true}
                     {/if}
-                </div>
-            </td>
-            <td>
-        	  {if r.published == 'true'}
-        		${D}{bbb_recording_status_shown}
-        	  {else}
-        		${D}{bbb_recording_status_hidden}
-              {/if}
-            </td>
-            <td class="bbb_startDate">${D}{r.startTime ? (new Date(parseInt(r.startTime)).toISO8601String()) + ' ' + r.timezoneOffset: ''}</td>
-            <td>
-              {for p in r.playback}
-              	{var recType = bbb_recording_type[p.type] === undefined ? p.type : bbb_recording_type[p.type]}
-              	{var viewRecType = bbb_recording_view_tooltip[p.type] === undefined ? p.type : bbb_recording_view_tooltip[p.type]}
-                {if r.published == 'true'}
-                    <a href="${D}{p.url}" title="${D}{viewRecType}" target="_blank">${D}{recType}</a>&nbsp;
-                {else}
-                    ${D}{recType}&nbsp;
-                {/if}
-              {/for}
-            </td>
-            <td>
-              {var fLength=false}
-              {for p in r.playback}
-                {if !fLength && p.length }
-                  ${D}{p.length}
-                  {var fLength=true}
-                {/if}
-              {/for}
-            </td>
-        </tr>
-      {/if}
-    {/for}
-        <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-        </tr>
-    </tbody>
-</table>
+                  {/for}
+                </td>
+            </tr>
+          {/if}
+        {/for}
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
 -->
 </div>
 
@@ -558,8 +559,10 @@
                 (
                 <span id="meeting_joinlink_${D}{meeting.id}" style="${D}{displayLink}">
                         {var multiplesessions = meeting.multipleSessionsAllowed && meetings.settings.config.addUpdateFormParameters.multiplesessionsallowedEnabled}
-                        <a id="joinMeetingLink" target="_blank" href="javascript:;" onclick="return meetings.utils.joinMeeting('${D}{meeting.id}', '#joinMeetingLink', ${D}{multiplesessions});" title="${D}{bbb_meetinginfo_launch_meeting_tooltip}" style="font-weight:bold">${D}{bbb_meetinginfo_link}</a>
-                        <i class="fa fa-sign-in"></i>
+                        {if meeting.joinable && meetings.userPerms.bbbParticipate}
+                            <a id="joinMeetingLink" target="_blank" href="javascript:;" onclick="return meetings.utils.joinMeeting('${D}{meeting.id}', '#joinMeetingLink', ${D}{multiplesessions});" title="${D}{bbb_meetinginfo_launch_meeting_tooltip}" style="font-weight:bold">${D}{bbb_meetinginfo_link}</a>
+                            <i class="fa fa-sign-in"></i>
+                        {/if}
                 </span>
                 {if meeting.canEnd}
                 {var end_meetingClass = (meeting.joinable && meeting.joinableMode == 'inprogress')? "bbb_end_meeting_shown": "bbb_end_meeting_hidden" }

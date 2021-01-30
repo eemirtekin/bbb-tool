@@ -8,14 +8,14 @@
     <parent>
         <groupId>org.sakaiproject</groupId>
         <artifactId>master</artifactId>
-        <version>19-SNAPSHOT</version>
+        <version>22-SNAPSHOT</version>
         <relativePath>../master/pom.xml</relativePath>
     </parent>
 
     <name>BigBlueButton</name>
     <groupId>org.sakaiproject.bbb</groupId>
     <artifactId>bbb</artifactId>
-    <version>19-SNAPSHOT</version>
+    <version>22-SNAPSHOT</version>
     <description>Sakai BigBlueButton integrates a Sakai instance with a BigBlueButton server, allowing Sakai users to easily create and join BigBlueButton meetings from a Sakai worksite and access playback recording.</description>
 
     <url>http://confluence.sakaiproject.org/confluence/display/BBB</url>
@@ -307,7 +307,7 @@
                     <id>aggregate</id>
                     <configuration>
                       <aggregate>true</aggregate>
-                          <source>1.5</source>
+                          <source>1.8</source>
                       <encoding>UTF-8</encoding>
                         <links>
                         <link>http://java.sun.com/j2se/1.5.0/docs/api</link>
